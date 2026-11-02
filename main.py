@@ -5,6 +5,8 @@ import subprocess
 
 import psutil
 
+from variations_seed import patch_variations_seeds
+
 
 def get_version_and_user_data_path():
     os_and_user_data_paths = {
@@ -97,6 +99,8 @@ def patch_local_state(user_data_path, last_version):
     with open(local_state_file, 'r', encoding='utf-8') as fp:
         local_state = json.load(fp)
 
+    patch_variations_seeds(user_data_path)
+
     modified = False
 
     # 1. Set all is_glic_eligible to true (recursive)
@@ -151,8 +155,6 @@ def main():
         print('Restart Chrome')
         for chrome in terminated_chromes:
             subprocess.Popen([chrome], stderr=subprocess.DEVNULL)
-
-    input('Enter to continue...')
 
 
 if __name__ == '__main__':

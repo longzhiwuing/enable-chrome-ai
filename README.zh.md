@@ -27,7 +27,7 @@
 
 ## ⚡️ 快速开始（pip）
 1. 创建并激活虚拟环境。
-2. 安装依赖：`python -m pip install psutil`。
+2. 安装依赖：`python -m pip install psutil zstandard`。
 3. 运行：`python main.py`。
 
 ## 🔧 做了什么
@@ -36,6 +36,8 @@
 - 在 `Local State` 中递归查找并将所有 `is_glic_eligible` 设为 `true`。
 - 在 `Local State` 中将 `variations_country` 设为 `"us"`。
 - 在 `Local State` 中将 `variations_permanent_consistency_country` 设为 `["<版本号>", "us"]`。
+- 若存在新版桌面 Chrome 使用的 Zstandard 压缩文件 `VariationsSeedV2` 和 `VariationsSafeSeedV2`，将其中的会话地区、永久地区设为 `"us"`；保留 seed 数据、签名、版本及未知 protobuf 字段。
+- 写入前先校验两个 seed 文件，将每个待修改文件的首份原件备份为 `<文件名>.bak`，再逐个原子替换。旧版 Chrome 没有这些文件时会跳过。
 - 重启补丁前已运行的 Chrome 版本。
 
 ## ⚠️ 已知限制 / 注意事项
@@ -43,11 +45,17 @@
 - 只有在能从进程信息中取到可执行文件路径时，脚本才会自动重启 Chrome。
 - macOS 上按进程名（`Google Chrome*`）识别，可能会终止不止"顶层"应用进程。
 - Linux 上按可执行文件名 `chrome` 识别；若你的发行版/安装方式使用其他名字，可能不会关闭 Chrome（从而仍可能有文件锁）。
+- seed 文件损坏、格式不支持或超过大小限制时会停止修改，不会覆盖文件。恢复时请完全退出 Chrome，再将各 `<文件名>.bak` 复制回对应 seed 文件；重复运行不会覆盖首份备份。
+- Chrome 更新或下载新 seed 数据后可能重置地区；Google 账号资格、企业策略及服务端限制仍可能阻止访问。
 
 ## 🛟 注意
 - 脚本会修改现有 Chrome 配置，如需保险请先备份 `User Data`。
 - 使用拥有该 Chrome 配置的同一系统用户运行，确保有写入权限。
 - 与 Google 无关，风险自担。
+
+## 验证
+运行 `uv run python -m unittest discover -s tests -v`。测试仅使用临时配置，不会关闭 Chrome，也不会修改真实用户配置。
+
 
 ## 📜 许可
 转载或基于本研究二次创作需要注明来源。

@@ -28,7 +28,7 @@ Tiny Python helper that enables Chrome's built-in AI features by patching your l
 
 ## ⚡️ Quick Start (pip)
 1. Create and activate a venv.
-2. Install deps: `python -m pip install psutil`.
+2. Install deps: `python -m pip install psutil zstandard`.
 3. Run: `python main.py`.
 
 ## 🔧 What Happens
@@ -37,6 +37,8 @@ Tiny Python helper that enables Chrome's built-in AI features by patching your l
 - Sets all `is_glic_eligible` to `true` in `Local State` (recursive search).
 - Sets `variations_country` to `"us"` in `Local State`.
 - Sets `variations_permanent_consistency_country` to `["<version>", "us"]` in `Local State`.
+- When present, patches session and permanent country fields to `"us"` in the Zstandard-compressed `VariationsSeedV2` and `VariationsSafeSeedV2` files used by newer desktop Chrome versions. Seed payloads, signatures, versions, and unknown protobuf fields are preserved.
+- Validates both seed files before changing them, keeps the first original of each changed seed as `<filename>.bak`, and replaces each seed atomically. Missing seed files are skipped for older Chrome versions.
 - Restarts any Chrome builds that were running before the patch.
 
 ## ⚠️ Caveats / Known Limitations
@@ -44,11 +46,17 @@ Tiny Python helper that enables Chrome's built-in AI features by patching your l
 - Chrome restart only happens if the executable path can be detected from running processes.
 - On macOS, process detection is name-based (`Google Chrome*`) and may terminate more than just the "top-level" app process.
 - On Linux, process detection expects an executable name of `chrome`; if your build uses a different name, Chrome may not be closed (and files may remain locked).
+- Invalid, unsupported, or oversized seed files stop patching rather than being overwritten. To restore seed backups, fully exit Chrome and copy each `<filename>.bak` over its matching seed file. Backups are not overwritten on later runs.
+- Chrome updates or newly downloaded seed data may reset the region. Google account eligibility, enterprise policies, and server-side restrictions can still prevent access.
 
 ## 🛟 Notes
 - The script writes to your existing Chrome profile; back up `User Data` if you want a safety net.
 - Run as the same OS user who owns the Chrome profile to ensure write access.
 - Not affiliated with Google—use at your own risk.
+
+## Verification
+Run `uv run python -m unittest discover -s tests -v`. The tests use temporary profiles and never close Chrome or modify your real profile.
+
 
 ## 📜 License
 Please credit this project when reposting or creating derivative works.
